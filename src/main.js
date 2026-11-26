@@ -22,15 +22,16 @@ function calculateSimpleRevenue(purchase, _product) {
  */
 function calculateBonusByProfit(index, total, seller) {
   // @TODO: Расчет бонуса от позиции в рейтинге
+  let profit = seller.profit;
   if (index == 0) {
-    return 150;
+    return profit * 0.15;
   } else if (index == 1 || index == 2) {
-    return 100;
+    return profit * 0.1;
   } else if (index == total - 1) {
     return 0;
   } else {
     // Для всех остальных
-    return 50;
+    return profit * 0.05;
   }
 }
 
@@ -144,6 +145,6 @@ function analyzeSalesData(data, options) {
     profit: +seller.profit.toFixed(2),
     sales_count: seller.sales_count,
     top_products: seller.top_products,
-    bonus: +seller.bonus.toFixed(2),
+    bonus: +seller.bonus.toFixed(2)
   }));
 }
