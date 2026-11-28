@@ -57,7 +57,10 @@ function analyzeSalesData(data, options) {
 
   // @TODO: Проверка наличия опций
 
-  const { calculateRevenue, calculateBonus } = options;
+  const {
+    calculateRevenue: calculateSimpleRevenue,
+    calculateBonus: calculateBonusByProfit,
+  } = options || {};
 
   if (
     typeof calculateRevenue !== "function" ||
@@ -93,29 +96,28 @@ function analyzeSalesData(data, options) {
   );
 
   // @TODO: Расчет выручки и прибыли для каждого продавца
+  data.purchase_records.forEach((record) => {
+    const seller = sellerIndex.get(record.seller_id);
+    if (!seller) {
+      return;
+    }
+    seller.sales_count += 1;
 
-  data.purchase_records.forEach(record => {
-        const seller = sellerIndex.get(record.seller_id);
-        if (!seller) {
-            return;
-        }
-        seller.sales_count += 1;
+    record.items.forEach((item) => {
+      const product = productIndex.get(item.sku);
+      if (!product) return;
 
-        record.items.forEach(item => {
-            const product = productIndex.get(item.sku);
-            if (!product) return;
+      const cost = product.purchase_price * item.quantity;
+      const revenue = calculateSimpleRevenue(item, product);
+      seller.revenue += revenue;
+      seller.profit += revenue - cost;
 
-            const cost = product.purchase_price * item.quantity;
-            const revenue = calculateSimpleRevenue(item, product);
-            seller.revenue += revenue;
-            seller.profit += revenue - cost;
-
-            if (!seller.products_sold[item.sku]) {
-                seller.products_sold[item.sku] = 0;
-            }
-            seller.products_sold[item.sku] += item.quantity;
-        });
+      if (!seller.products_sold[item.sku]) {
+        seller.products_sold[item.sku] = 0;
+      }
+      seller.products_sold[item.sku] += item.quantity;
     });
+  });
 
   // @TODO: Сортировка продавцов по прибыли
 
@@ -133,13 +135,13 @@ function analyzeSalesData(data, options) {
 
   // @TODO: Подготовка итоговой коллекции с нужными полями
 
-  return sellerStats.map(seller => ({
-        seller_id: seller.id,
-        name: seller.name,
-        revenue: +seller.revenue.toFixed(2),
-        profit: +seller.profit.toFixed(2),
-        sales_count: seller.sales_count,
-        top_products: seller.top_products,
-        bonus: seller.bonus,
-    }));
+  return sellerStats.map((seller) => ({
+    seller_id: seller.id,
+    name: seller.name,
+    revenue: +seller.revenue.toFixed(2),
+    profit: +seller.profit.toFixed(2),
+    sales_count: seller.sales_count,
+    top_products: seller.top_products,
+    bonus: seller.bonus,
+  }));
 }
